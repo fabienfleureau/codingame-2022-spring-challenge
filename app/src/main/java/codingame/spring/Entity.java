@@ -13,9 +13,7 @@ class Entity {
     int threatFor; // Given this monster's trajectory, is it a threat to 1=your base, 2=your opponent's base, 0=neither
     int lastSeenTurn;
     boolean isTargeted = false;
-    Entity target;
-    Point2D targetPoint;
-    Point2D patrolPoint;
+
 
 
     boolean isMyHero() {
