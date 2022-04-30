@@ -50,7 +50,10 @@ tasks.register('codingame-sync') {
                 line -> if (!line.startsWith("import") && !line.startsWith("package")) codeLines+=line+"\n"
             }
         }
-        outputFile.text = importLines + codeLines.replaceAll("public class", "class").replaceAll("public interface", "interface")
+        outputFile.text = importLines + codeLines
+        .replaceAll("public class", "class")
+        .replaceAll("public interface", "interface")
+        .replaceAll("public enum", "enum")
     }
 }
 

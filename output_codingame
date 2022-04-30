@@ -84,9 +84,28 @@ class Hero {
     public Entity target;
     public Point2D targetPoint;
     public Point2D patrolPoint;
+    public Role role;
     public Strategy strategy;
-    public Hero(Entity entity) {
+
+    public Hero(Entity entity, Role role, GameMap map) {
         this.entity = entity;
+        this.role = role;
+        this.strategy = new ModifiablePatrolStrategy(map, role);
+    }
+    public void printMove() {
+        // In the first league: MOVE <x> <y> | WAIT; In later leagues: | SPELL <spellParams>;
+        if (target != null ) {
+            System.out.println("MOVE " + (int) targetPoint.x + " " + (int) targetPoint.y + " ATK");
+        } else if (patrolPoint != null) {
+            System.out.println("MOVE " + (int) targetPoint.x + " " + (int) targetPoint.y + " PAT");
+        } else {
+            System.out.println("WAIT");
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "Hero[x=" + entity.x + ",y=" + entity.y + ",vx=" + entity.vx + ",vy" + entity.vy + "]";
     }
 
 }
@@ -99,22 +118,26 @@ class GameMap {
     // The corner of the map representing your base
     public int baseX;
     public int baseY;
-    public Point2D patrolPoint1;
-    public Point2D patrolPoint2;
+    public Patrol farmPatrol;
+    public Patrol basePatrol;
 
     public GameMap(int x, int y) {
         this.baseX = x;
         this.baseY = y;
+        farmPatrol = new Patrol();
+        basePatrol = new Patrol();
         if (baseX == 0) {
-            patrolPoint1 = new Point2D(2000, 6000);
+            farmPatrol.point1 = new Point2D(2000, 6000);
+            farmPatrol.point2 = new Point2D(6000, 2000);
+            basePatrol.point1 = new Point2D(1500, 3000);
+            basePatrol.point2 = new Point2D(3000, 1500);
         } else {
-            patrolPoint1 = new Point2D(baseX - 2000 , baseY - 6000);
+            farmPatrol.point1 = new Point2D(baseX - 2000 , baseY - 6000);
+            farmPatrol.point2 = new Point2D(baseX - 6000 , baseY - 2000);
+            basePatrol.point1 = new Point2D(baseX - 1500 , baseY - 3000);
+            basePatrol.point2 = new Point2D(baseX - 3000 , baseY - 1500);
         }
-        if (baseX == 0) {
-            patrolPoint2 = new Point2D(6000, 2000);
-        } else {
-            patrolPoint2 = new Point2D(baseX - 6000 , baseY - 2000);
-        }
+
     }
 
     @Override
@@ -177,7 +200,7 @@ class GameState {
             currentEntity.lastSeenTurn = turn;
             if (currentEntity.isMyHero()) {
                 if (myHeroes[myHeroesIndex] == null) {
-                    myHeroes[myHeroesIndex++] = new Hero(currentEntity);
+                    myHeroes[myHeroesIndex++] = new Hero(currentEntity, Role.FARMER, map);
                 }
             }
         }
@@ -214,77 +237,15 @@ class Player {
             gameState.newTurn(in);
            
             for (int i = 0; i < gameState.heroesPerPlayer; i++) {
-                double selectedDistance = 999999999;
-                Entity selectedMonster = null;
-                Point2D selectedInterceptionPoint = null;
-                double selectedDistanceBaseThreat = 999999999;
-                Entity selectedMonsterBaseThreat = null;
-                Point2D selectedInterceptionPointBaseThreat = null;
                 Hero currentHero = gameState.myHeroes[i];
+                System.err.println(currentHero);
+                currentHero.strategy.computeMove(currentHero, gameState);
                 
-                    System.err.println(currentHero);
-                // hastarget
-                if (currentHero.target != null
-                && currentHero.target.isAlive(gameState.turn)
-                && Utils.distance(currentHero.entity, currentHero.target) < 1600) {
-
-                    currentHero.targetPoint = Utils.calculateInterceptionPoint(currentHero.entity, currentHero.target);
-
-
-                } else {
-                    if (currentHero.target != null) {
-                        currentHero.target.isTargeted = false;
-                        currentHero.target = null;
-                    }
-                    for (Entity target : gameState.entityMap.values()) {
-                        if (target.isMonster() && target.isAlive(gameState.turn) && !target.isTargeted) {
-                            System.err.println(target);
-                            Point2D interceptionPoint = Utils.calculateInterceptionPoint(currentHero.entity, target);
-                            System.err.println(interceptionPoint);
-
-                            double currDist = Utils.distance(currentHero.entity.getPosition(), interceptionPoint);
-                            if (currDist < selectedDistance ) {
-                                selectedDistance = currDist;
-                                selectedMonster = target;
-                                selectedInterceptionPoint = interceptionPoint;
-                            }
-                            if (currDist < selectedDistanceBaseThreat && target.isBaseThreat(gameState.map)) {
-                                selectedDistanceBaseThreat = currDist;
-                                selectedMonsterBaseThreat = target;
-                                selectedInterceptionPointBaseThreat = interceptionPoint;
-                            }
-                        }
-
-                    }
-                    if (selectedMonsterBaseThreat != null) {
-                        currentHero.target = selectedMonsterBaseThreat;
-                        currentHero.targetPoint = selectedInterceptionPointBaseThreat;
-                        selectedMonsterBaseThreat.isTargeted = true;
-                    } else if (selectedMonster != null) {
-                        currentHero.target = selectedMonster;
-                        currentHero.targetPoint = selectedInterceptionPoint;
-                        selectedMonster.isTargeted = true;
-                    }
-                }
-                // Write an action using System.out.println()
-                // To debug: System.err.println("Debug messages...");
-                if (currentHero.target == null ) {
-                    if (currentHero.patrolPoint == null || Utils.distance(currentHero.entity.getPosition(), gameState.map.patrolPoint1) < 1600) {
-                        currentHero.patrolPoint = gameState.map.patrolPoint2;
-                    } else if (Utils.distance(currentHero.entity.getPosition(), gameState.map.patrolPoint2) < 1600) {
-                        currentHero.patrolPoint = gameState.map.patrolPoint1;
-                    }
-                    currentHero.targetPoint = currentHero.patrolPoint;
-                }
-
-                // In the first league: MOVE <x> <y> | WAIT; In later leagues: | SPELL <spellParams>;
-                if (currentHero.target != null ) {
-                    System.out.println("MOVE " + (int) currentHero.targetPoint.x + " " + (int) currentHero.targetPoint.y + " ATK");
-                } else if (currentHero.patrolPoint != null) {
-                    System.out.println("MOVE " + (int) currentHero.targetPoint.x + " " + (int) currentHero.targetPoint.y + " PAT");
-                } else {
-                    System.out.println("WAIT");
-                }
+            }
+            
+            for (int i = 0; i < gameState.heroesPerPlayer; i++) {
+                Hero currentHero = gameState.myHeroes[i];
+                currentHero.printMove();
             }
             
             long end = System.currentTimeMillis();
@@ -295,7 +256,168 @@ class Player {
 
 }
 
+
+class BasicStrategy implements Strategy {
+
+    public void computeMove(Hero currentHero, GameState gameState) {
+        double selectedDistance = 999999999;
+        Entity selectedMonster = null;
+        Point2D selectedInterceptionPoint = null;
+        double selectedDistanceBaseThreat = 999999999;
+        Entity selectedMonsterBaseThreat = null;
+        Point2D selectedInterceptionPointBaseThreat = null;
+        
+        // hastarget
+        if (currentHero.target != null
+        && currentHero.target.isAlive(gameState.turn)
+        && Utils.distance(currentHero.entity, currentHero.target) < 1600) {
+
+            currentHero.targetPoint = Utils.calculateInterceptionPoint(currentHero.entity, currentHero.target);
+
+
+        } else {
+            if (currentHero.target != null) {
+                currentHero.target.isTargeted = false;
+                currentHero.target = null;
+            }
+            for (Entity target : gameState.entityMap.values()) {
+                if (target.isMonster() && target.isAlive(gameState.turn) && !target.isTargeted) {
+                    System.err.println(target);
+                    Point2D interceptionPoint = Utils.calculateInterceptionPoint(currentHero.entity, target);
+                    System.err.println(interceptionPoint);
+
+                    double currDist = Utils.distance(currentHero.entity.getPosition(), interceptionPoint);
+                    if (currDist < selectedDistance ) {
+                        selectedDistance = currDist;
+                        selectedMonster = target;
+                        selectedInterceptionPoint = interceptionPoint;
+                    }
+                    if (currDist < selectedDistanceBaseThreat && target.isBaseThreat(gameState.map)) {
+                        selectedDistanceBaseThreat = currDist;
+                        selectedMonsterBaseThreat = target;
+                        selectedInterceptionPointBaseThreat = interceptionPoint;
+                    }
+                }
+
+            }
+            if (selectedMonsterBaseThreat != null) {
+                currentHero.target = selectedMonsterBaseThreat;
+                currentHero.targetPoint = selectedInterceptionPointBaseThreat;
+                selectedMonsterBaseThreat.isTargeted = true;
+            } else if (selectedMonster != null) {
+                currentHero.target = selectedMonster;
+                currentHero.targetPoint = selectedInterceptionPoint;
+                selectedMonster.isTargeted = true;
+            }
+        }
+        // Write an action using System.out.println()
+        // To debug: System.err.println("Debug messages...");
+        if (currentHero.target == null ) {
+            if (currentHero.patrolPoint == null || Utils.distance(currentHero.entity.getPosition(), gameState.map.farmPatrol.point1) < 1600) {
+                currentHero.patrolPoint = gameState.map.farmPatrol.point2;
+            } else if (Utils.distance(currentHero.entity.getPosition(), gameState.map.farmPatrol.point2) < 1600) {
+                currentHero.patrolPoint = gameState.map.farmPatrol.point1;
+            }
+            currentHero.targetPoint = currentHero.patrolPoint;
+        }
+    }
+    
+}
+
+
+class ModifiablePatrolStrategy implements Strategy {
+    
+    Patrol patrol;
+
+    public ModifiablePatrolStrategy(GameMap map, Role role) {
+        if (role == Role.DEFENDER) {
+            patrol = map.basePatrol;
+        } else {
+            patrol = map.farmPatrol;
+        }
+    }
+
+    public void computeMove(Hero currentHero, GameState gameState) {
+        double selectedDistance = 999999999;
+        Entity selectedMonster = null;
+        Point2D selectedInterceptionPoint = null;
+        double selectedDistanceBaseThreat = 999999999;
+        Entity selectedMonsterBaseThreat = null;
+        Point2D selectedInterceptionPointBaseThreat = null;
+        
+        // hastarget
+        if (currentHero.target != null
+        && currentHero.target.isAlive(gameState.turn)
+        && Utils.distance(currentHero.entity, currentHero.target) < 1600) {
+
+            currentHero.targetPoint = Utils.calculateInterceptionPoint(currentHero.entity, currentHero.target);
+
+
+        } else {
+            if (currentHero.target != null) {
+                currentHero.target.isTargeted = false;
+                currentHero.target = null;
+            }
+            for (Entity target : gameState.entityMap.values()) {
+                if (target.isMonster() && target.isAlive(gameState.turn) && !target.isTargeted) {
+                    System.err.println(target);
+                    Point2D interceptionPoint = Utils.calculateInterceptionPoint(currentHero.entity, target);
+                    System.err.println(interceptionPoint);
+
+                    double currDist = Utils.distance(currentHero.entity.getPosition(), interceptionPoint);
+                    if (currDist < selectedDistance ) {
+                        selectedDistance = currDist;
+                        selectedMonster = target;
+                        selectedInterceptionPoint = interceptionPoint;
+                    }
+                    if (currDist < selectedDistanceBaseThreat && target.isBaseThreat(gameState.map)) {
+                        selectedDistanceBaseThreat = currDist;
+                        selectedMonsterBaseThreat = target;
+                        selectedInterceptionPointBaseThreat = interceptionPoint;
+                    }
+                }
+
+            }
+            if (selectedMonsterBaseThreat != null) {
+                currentHero.target = selectedMonsterBaseThreat;
+                currentHero.targetPoint = selectedInterceptionPointBaseThreat;
+                selectedMonsterBaseThreat.isTargeted = true;
+            } else if (selectedMonster != null) {
+                currentHero.target = selectedMonster;
+                currentHero.targetPoint = selectedInterceptionPoint;
+                selectedMonster.isTargeted = true;
+            }
+        }
+        // Write an action using System.out.println()
+        // To debug: System.err.println("Debug messages...");
+        if (currentHero.target == null ) {
+            if (currentHero.patrolPoint == null || Utils.distance(currentHero.entity.getPosition(), patrol.point1) < 1600) {
+                currentHero.patrolPoint = patrol.point2;
+            } else if (Utils.distance(currentHero.entity.getPosition(), patrol.point2) < 1600) {
+                currentHero.patrolPoint = patrol.point1;
+            }
+            currentHero.targetPoint = currentHero.patrolPoint;
+        }
+    }
+}
+
+
+class Patrol {
+    public Point2D point1;
+    public Point2D point2;
+}
+
+enum Role {
+    FARMER,
+    ATTACKER,
+    DEFENDER;
+    
+}
+
+
 interface Strategy {
+
+    void computeMove(Hero currentHero, GameState gameState);
 
 }
 

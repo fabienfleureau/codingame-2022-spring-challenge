@@ -6,6 +6,7 @@ import java.util.Scanner;
 
 import codingame.spring.entities.Entity;
 import codingame.spring.entities.Hero;
+import codingame.spring.strategy.Role;
 
 public class GameState {
 
@@ -54,7 +55,7 @@ public class GameState {
             currentEntity.lastSeenTurn = turn;
             if (currentEntity.isMyHero()) {
                 if (myHeroes[myHeroesIndex] == null) {
-                    myHeroes[myHeroesIndex++] = new Hero(currentEntity);
+                    myHeroes[myHeroesIndex++] = new Hero(currentEntity, Role.FARMER, map);
                 }
             }
         }
