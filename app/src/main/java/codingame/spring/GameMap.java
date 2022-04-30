@@ -1,14 +1,16 @@
 package codingame.spring;
 
+import codingame.spring.utils.Point2D;
+
 public class GameMap {
     int maxX=17630;
     int maxY=9000; 
 
     // The corner of the map representing your base
-    int baseX;
-    int baseY;
-    Point2D patrolPoint1;
-    Point2D patrolPoint2;
+    public int baseX;
+    public int baseY;
+    public Point2D patrolPoint1;
+    public Point2D patrolPoint2;
 
     public GameMap(int x, int y) {
         this.baseX = x;

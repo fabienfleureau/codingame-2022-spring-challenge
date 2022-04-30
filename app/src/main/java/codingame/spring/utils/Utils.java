@@ -1,30 +1,32 @@
-package codingame.spring;
+package codingame.spring.utils;
 
-class Utils {
+import codingame.spring.entities.Entity;
 
-    static Double fastSqrt(int d) {
+public class Utils {
+
+    public static Double fastSqrt(int d) {
         return Double.longBitsToDouble( ( ( Double.doubleToLongBits( Double.valueOf(d) )-(1l<<52) )>>1 ) + ( 1l<<61 ) );
     }
 
-    static Double fastSqrt(double d) {
+    public static Double fastSqrt(double d) {
         return Double.longBitsToDouble( ( ( Double.doubleToLongBits( d )-(1l<<52) )>>1 ) + ( 1l<<61 ) );
     }
 
     
-    static int sqpow(int val) {
+    public static int sqpow(int val) {
         return val * val;
     }
 
-    static double sqpow(double val) {
+    public static double sqpow(double val) {
         return val * val;
     }
 
 
-    static Double distance(Entity entity1, Entity entity2) {
+    public static Double distance(Entity entity1, Entity entity2) {
         return Utils.fastSqrt(sqpow(entity2.x - entity1.x) + sqpow(entity2.y - entity1.y));
     }
 
-    static Double distance(Point2D entity1, Point2D entity2) {
+    public static Double distance(Point2D entity1, Point2D entity2) {
         return Utils.fastSqrt(sqpow(entity2.x - entity1.x) + sqpow(entity2.y - entity1.y));
     }
 

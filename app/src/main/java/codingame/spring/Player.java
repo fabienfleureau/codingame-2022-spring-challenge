@@ -1,6 +1,12 @@
 package codingame.spring;
 
 import java.util.*;
+
+import codingame.spring.entities.Entity;
+import codingame.spring.entities.Hero;
+import codingame.spring.utils.Point2D;
+import codingame.spring.utils.Utils;
+
 import java.io.*;
 import java.math.*;
 

@@ -4,13 +4,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
+import codingame.spring.entities.Entity;
+import codingame.spring.entities.Hero;
+
 public class GameState {
 
     public GameMap map;
     public int heroesPerPlayer; // Always 3
-    public GamePlayer[] players = new GamePlayer[2];
     public GamePlayer me;
-    public GamePlayer ennemy;
+    public GamePlayer opponent;
     public Map<Integer, Entity> entityMap = new HashMap<>();
     public Hero[] myHeroes = new Hero[3];
     public int turn = 0;
@@ -19,22 +21,24 @@ public class GameState {
     public void initState(Scanner in) {
         map = new GameMap(in.nextInt(),in.nextInt());   
         heroesPerPlayer = in.nextInt();
-        players[0] = new GamePlayer();
-        players[1] = new GamePlayer();
+        me = new GamePlayer();
+        opponent = new GamePlayer();
     }
 
     public void newTurn(Scanner in) {
         turn++;
-        for (int i = 0; i < 2; i++) {
-            players[i].health = in.nextInt();
-            players[i].mana = in.nextInt(); 
-        }
+        // players data
+        me.health = in.nextInt();
+        me.mana = in.nextInt(); 
+        opponent.health = in.nextInt();
+        opponent.mana = in.nextInt();
+
         int entityCount = in.nextInt(); // Amount of heros and monsters you can see
         int myHeroesIndex = 0;
         for (int i = 0; i < entityCount; i++) {
             int id = in.nextInt(); // Unique identifier
             if (!entityMap.containsKey(id)) {
-                entityMap.put(id, new Entity());
+                entityMap.put(id, new Entity(id));
             }
             Entity currentEntity = entityMap.get(id);
             currentEntity.type = in.nextInt(); // 0=monster, 1=your hero, 2=opponent hero

@@ -5,51 +5,60 @@ import java.util.*;
 import java.io.*;
 import java.math.*;
 
+
 class Entity {
-    int type; // 0=monster, 1=your hero, 2=opponent hero
-    int x; // Position of this entity
-    int y;
-    int shieldLife; // Ignore for this league; Count down until shield spell fades
-    int isControlled; // Ignore for this league; Equals 1 when this entity is under a control spell
-    int health; // Remaining health of this monster
-    int vx; // Trajectory of this monster
-    int vy;
-    int nearBase; // 0=monster with no target yet, 1=monster targeting a base
-    int threatFor; // Given this monster's trajectory, is it a threat to 1=your base, 2=your opponent's base, 0=neither
-    int lastSeenTurn;
-    boolean isTargeted = false;
+    public int id;
+    public int type; // 0=monster, 1=your hero, 2=opponent hero
+    public int x; // Position of this entity
+    public int y;
+    public int shieldLife; // Ignore for this league; Count down until shield spell fades
+    public int isControlled; // Ignore for this league; Equals 1 when this entity is under a control spell
+    public int health; // Remaining health of this monster
+    public int vx; // Trajectory of this monster
+    public int vy;
+    public int nearBase; // 0=monster with no target yet, 1=monster targeting a base
+    public int threatFor; // Given this monster's trajectory, is it a threat to 1=your base, 2=your opponent's base, 0=neither
+    public int lastSeenTurn;
+    public boolean isTargeted = false;
 
-
-
-    boolean isMyHero() {
-        return type == 1;
+    public Entity(int id) {
+        this.id = id;
     }
 
-    boolean isMonster() {
+    public boolean isMonster() {
         return type == 0;
     }
 
-    boolean isAlive(int currentTurn) {
+    public boolean isMyHero() {
+        return type == 1;
+    }
+
+    public boolean isOpponentHero() {
+        return type == 2;
+    }
+
+
+    public boolean isAlive(int currentTurn) {
         return lastSeenTurn == currentTurn;
     }
 
-    boolean isGoingToBase() {
+    public boolean isGoingToBase() {
         return nearBase == 1 && threatFor == 1;
     }
 
-    double getSpeed() {
+    public double getSpeed() {
         return 800;
     }
 
-    Point2D getPosition() {
+    public Point2D getPosition() {
         return new Point2D(x, y);
     }
 
-    Point2D getSpeedVector() {
+    public Point2D getSpeedVector() {
         return new Point2D(vx, vy);
     }
 
-    boolean isBaseThreat(GameMap map) {
+    public boolean isBaseThreat(GameMap map) {
         double a = vy/vx;
         double b = y - a * x;
         if (map.baseX == 0) {
@@ -69,15 +78,29 @@ class Entity {
     }
 }
 
+
+class Hero {
+    public Entity entity;
+    public Entity target;
+    public Point2D targetPoint;
+    public Point2D patrolPoint;
+    public Strategy strategy;
+    public Hero(Entity entity) {
+        this.entity = entity;
+    }
+
+}
+
+
 class GameMap {
     int maxX=17630;
     int maxY=9000; 
 
     // The corner of the map representing your base
-    int baseX;
-    int baseY;
-    Point2D patrolPoint1;
-    Point2D patrolPoint2;
+    public int baseX;
+    public int baseY;
+    public Point2D patrolPoint1;
+    public Point2D patrolPoint2;
 
     public GameMap(int x, int y) {
         this.baseX = x;
@@ -101,18 +124,18 @@ class GameMap {
 }
 
 class GamePlayer {
-    int health;  // Each player's base health
-    int mana; // Ignore in the first league; Spend ten mana to cast a spell
+    public int health;  // Each player's base health
+    public int mana; // Ignore in the first league; Spend ten mana to cast a spell
 }
+
 
 
 class GameState {
 
     public GameMap map;
     public int heroesPerPlayer; // Always 3
-    public GamePlayer[] players = new GamePlayer[2];
     public GamePlayer me;
-    public GamePlayer ennemy;
+    public GamePlayer opponent;
     public Map<Integer, Entity> entityMap = new HashMap<>();
     public Hero[] myHeroes = new Hero[3];
     public int turn = 0;
@@ -121,22 +144,24 @@ class GameState {
     public void initState(Scanner in) {
         map = new GameMap(in.nextInt(),in.nextInt());   
         heroesPerPlayer = in.nextInt();
-        players[0] = new GamePlayer();
-        players[1] = new GamePlayer();
+        me = new GamePlayer();
+        opponent = new GamePlayer();
     }
 
     public void newTurn(Scanner in) {
         turn++;
-        for (int i = 0; i < 2; i++) {
-            players[i].health = in.nextInt();
-            players[i].mana = in.nextInt(); 
-        }
+        // players data
+        me.health = in.nextInt();
+        me.mana = in.nextInt(); 
+        opponent.health = in.nextInt();
+        opponent.mana = in.nextInt();
+
         int entityCount = in.nextInt(); // Amount of heros and monsters you can see
         int myHeroesIndex = 0;
         for (int i = 0; i < entityCount; i++) {
             int id = in.nextInt(); // Unique identifier
             if (!entityMap.containsKey(id)) {
-                entityMap.put(id, new Entity());
+                entityMap.put(id, new Entity(id));
             }
             Entity currentEntity = entityMap.get(id);
             currentEntity.type = in.nextInt(); // 0=monster, 1=your hero, 2=opponent hero
@@ -162,16 +187,7 @@ class GameState {
     
 }
 
-class Hero {
-    Entity entity;
-    Entity target;
-    Point2D targetPoint;
-    Point2D patrolPoint;
-    public Hero(Entity entity) {
-        this.entity = entity;
-    }
 
-}
 
 
 /**
@@ -279,11 +295,15 @@ class Player {
 
 }
 
-class Point2D {
-    double x;
-    double y;
+interface Strategy {
 
-    Point2D(double x, double y) {
+}
+
+class Point2D {
+    public double x;
+    public double y;
+
+    public Point2D(double x, double y) {
         this.x = x;
         this.y = y;
     }
@@ -301,31 +321,32 @@ class Point2D {
     }
 }
 
+
 class Utils {
 
-    static Double fastSqrt(int d) {
+    public static Double fastSqrt(int d) {
         return Double.longBitsToDouble( ( ( Double.doubleToLongBits( Double.valueOf(d) )-(1l<<52) )>>1 ) + ( 1l<<61 ) );
     }
 
-    static Double fastSqrt(double d) {
+    public static Double fastSqrt(double d) {
         return Double.longBitsToDouble( ( ( Double.doubleToLongBits( d )-(1l<<52) )>>1 ) + ( 1l<<61 ) );
     }
 
     
-    static int sqpow(int val) {
+    public static int sqpow(int val) {
         return val * val;
     }
 
-    static double sqpow(double val) {
+    public static double sqpow(double val) {
         return val * val;
     }
 
 
-    static Double distance(Entity entity1, Entity entity2) {
+    public static Double distance(Entity entity1, Entity entity2) {
         return Utils.fastSqrt(sqpow(entity2.x - entity1.x) + sqpow(entity2.y - entity1.y));
     }
 
-    static Double distance(Point2D entity1, Point2D entity2) {
+    public static Double distance(Point2D entity1, Point2D entity2) {
         return Utils.fastSqrt(sqpow(entity2.x - entity1.x) + sqpow(entity2.y - entity1.y));
     }
 

@@ -41,7 +41,7 @@ tasks.register('codingame-sync') {
         def importLines = "";
         sourceSets.main.java.each{ File f -> 
              f.readLines().each {
-                line -> if (line.startsWith("import")) importLines+=line+"\n"
+                line -> if (line.startsWith("import") && !line.startsWith("import codingame")) importLines+=line+"\n"
             }
         }
         def codeLines = "";
@@ -50,7 +50,7 @@ tasks.register('codingame-sync') {
                 line -> if (!line.startsWith("import") && !line.startsWith("package")) codeLines+=line+"\n"
             }
         }
-        outputFile.text = importLines + codeLines.replaceAll("public class", "class")
+        outputFile.text = importLines + codeLines.replaceAll("public class", "class").replaceAll("public interface", "interface")
     }
 }
 
