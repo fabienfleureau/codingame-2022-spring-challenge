@@ -4,6 +4,9 @@ import java.util.*;
 
 import codingame.spring.entities.Entity;
 import codingame.spring.entities.Hero;
+import codingame.spring.strategy.BasicMultiHeroStrategy;
+import codingame.spring.strategy.EliminateThreatsStrategy;
+import codingame.spring.strategy.MultiHeroStrategy;
 import codingame.spring.utils.Point2D;
 import codingame.spring.utils.Utils;
 
@@ -29,20 +32,16 @@ class Player {
         long initEnd = System.currentTimeMillis();
         System.err.println("Initialization duration: " + (initEnd-initStart));
         // game loop
+        // MultiHeroStrategy strategy = new BasicMultiHeroStrategy();
+        MultiHeroStrategy strategy = new EliminateThreatsStrategy();
         while (true) {
             long start = System.currentTimeMillis();
             gameState.newTurn(in);
            
-            for (int i = 0; i < gameState.heroesPerPlayer; i++) {
-                Hero currentHero = gameState.myHeroes[i];
-                System.err.println(currentHero);
-                currentHero.strategy.computeMove(currentHero, gameState);
-                
-            }
+            strategy.computeMoves(gameState);
             
             for (int i = 0; i < gameState.heroesPerPlayer; i++) {
-                Hero currentHero = gameState.myHeroes[i];
-                currentHero.printMove();
+                gameState.myHeroes[i].printMove();
             }
             
             long end = System.currentTimeMillis();

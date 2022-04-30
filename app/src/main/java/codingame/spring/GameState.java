@@ -17,13 +17,14 @@ public class GameState {
     public Map<Integer, Entity> entityMap = new HashMap<>();
     public Hero[] myHeroes = new Hero[3];
     public int turn = 0;
-
+    public StrategicInfo strategicInfo = new StrategicInfo();
 
     public void initState(Scanner in) {
         map = new GameMap(in.nextInt(),in.nextInt());   
         heroesPerPlayer = in.nextInt();
         me = new GamePlayer();
         opponent = new GamePlayer();
+
     }
 
     public void newTurn(Scanner in) {
@@ -55,9 +56,10 @@ public class GameState {
             currentEntity.lastSeenTurn = turn;
             if (currentEntity.isMyHero()) {
                 if (myHeroes[myHeroesIndex] == null) {
-                    myHeroes[myHeroesIndex++] = new Hero(currentEntity, Role.FARMER, map);
+                    myHeroes[myHeroesIndex++] = new Hero(currentEntity, Role.fromId(id), map);
                 }
             }
+            strategicInfo.computeTop3Threats(this);
         }
 
 

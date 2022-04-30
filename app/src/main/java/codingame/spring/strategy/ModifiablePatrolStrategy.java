@@ -73,9 +73,9 @@ public class ModifiablePatrolStrategy implements Strategy {
         // Write an action using System.out.println()
         // To debug: System.err.println("Debug messages...");
         if (currentHero.target == null ) {
-            if (currentHero.patrolPoint == null || Utils.distance(currentHero.entity.getPosition(), patrol.point1) < 1600) {
+            if (currentHero.patrolPoint == null || Utils.distance(currentHero.entity.getPosition(), patrol.point1) < 1000) {
                 currentHero.patrolPoint = patrol.point2;
-            } else if (Utils.distance(currentHero.entity.getPosition(), patrol.point2) < 1600) {
+            } else if (Utils.distance(currentHero.entity.getPosition(), patrol.point2) < 1000) {
                 currentHero.patrolPoint = patrol.point1;
             }
             currentHero.targetPoint = currentHero.patrolPoint;

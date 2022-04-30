@@ -8,6 +8,7 @@ public class GameMap {
     int maxY=9000; 
 
     // The corner of the map representing your base
+    public Point2D base;
     public int baseX;
     public int baseY;
     public Patrol farmPatrol;
@@ -16,6 +17,7 @@ public class GameMap {
     public GameMap(int x, int y) {
         this.baseX = x;
         this.baseY = y;
+        this.base = new Point2D(x, y);
         farmPatrol = new Patrol();
         basePatrol = new Patrol();
         if (baseX == 0) {

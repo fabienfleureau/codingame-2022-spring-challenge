@@ -1,7 +1,11 @@
 package codingame.spring.entities;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import codingame.spring.GameMap;
 import codingame.spring.utils.Point2D;
+import codingame.spring.utils.Utils;
 
 public class Entity {
     public int id;
@@ -17,6 +21,7 @@ public class Entity {
     public int threatFor; // Given this monster's trajectory, is it a threat to 1=your base, 2=your opponent's base, 0=neither
     public int lastSeenTurn;
     public boolean isTargeted = false;
+    public List<Hero> targetedBy = new ArrayList<>(2);
 
     public Entity(int id) {
         this.id = id;
@@ -72,5 +77,21 @@ public class Entity {
     @Override
     public String toString() {
         return "Entity[type=" + type + ",x=" + x + ",y=" + y + ",vx=" + vx + ",vy" + vy + "]";
+    }
+
+    public void targetedBy(Hero hero) {
+        targetedBy.add(hero);
+    }
+
+    public boolean hasEnoughHeroToBeKilled(GameMap map) {
+        Double baseDistance = Utils.distance(this.getPosition(), map.base);
+        double turnsToBase = baseDistance / 400.0;
+        int futureDamageReceived = 0;
+        for (Hero hero : targetedBy) {
+            double turnsToContactWithHero = Utils.distance(this.getPosition(), hero.targetPoint);
+            futureDamageReceived += (int)(turnsToBase - turnsToContactWithHero) * hero.damage;
+        }
+        System.err.println("Damages(futur/health): " + futureDamageReceived + "/" + health);
+        return futureDamageReceived > health;
     }
 }
